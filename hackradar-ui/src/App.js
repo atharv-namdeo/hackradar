@@ -331,7 +331,7 @@ export default function HackRadar() {
             -webkit-overflow-scrolling: touch;
           }
           .stat-pill { flex-shrink: 0; }
-          .grid-view { grid-template-columns: 1fr !important; padding: 16px !important; }
+          .grid-view { grid-template-columns: minmax(0, 1fr) !important; padding: 16px !important; }
           .list-view { padding: 12px 16px !important; }
           
           .detail-panel {
@@ -440,7 +440,7 @@ function DetailPanel({ email, onClose }) {
 
 const s = {
   root: {
-    display: "flex", height: "100vh", width: "100vw", overflow: "hidden",
+    display: "flex", height: "100vh", width: "100%", overflow: "hidden", overflowX: "hidden",
     background: "#060a12", fontFamily: "'Outfit', sans-serif",
     color: "#cbd5e1", position: "relative",
   },
@@ -531,6 +531,8 @@ const s = {
     padding: "16px 18px", cursor: "pointer",
     transition: "border-color 0.15s, background 0.15s",
     animation: "fadeUp 0.3s ease both",
+    minWidth: 0,
+    width: "100%",
   },
   cardList: { display: "flex", flexDirection: "column" },
   cardSelected: { borderColor: "#4f46e5", background: "#1e1b4b20" },
@@ -539,7 +541,7 @@ const s = {
   deadlineBadge: { fontSize: 10, color: "#f87171", background: "#f8717118", padding: "2px 8px", borderRadius: 20 },
   timeAgo: { fontSize: 10, color: "#334155", fontFamily: "'JetBrains Mono', monospace" },
   cardSubject: { fontSize: 13, fontWeight: 600, color: "#e2e8f0", lineHeight: 1.4, marginBottom: 4, wordBreak: "break-word" },
-  cardFrom: { fontSize: 11, color: "#334155", marginBottom: 8, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
+  cardFrom: { fontSize: 11, color: "#334155", marginBottom: 8, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", display: "block", width: "100%" },
   cardSnippet: { fontSize: 12, color: "#475569", lineHeight: 1.6, marginBottom: 10 },
   cardTags: { display: "flex", gap: 5, flexWrap: "wrap" },
   tag: { fontSize: 10, padding: "2px 9px", borderRadius: 20, fontWeight: 500 },
