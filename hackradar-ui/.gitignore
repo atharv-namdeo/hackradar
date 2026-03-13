@@ -9,7 +9,7 @@
 /coverage
 
 # production
-/build
+# /build removed so frontend is tracked
 
 # misc
 .DS_Store

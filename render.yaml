@@ -2,7 +2,7 @@ services:
   - type: web
     name: hackradar
     runtime: python
-    buildCommand: npm install --prefix hackradar-ui && npm run build --prefix hackradar-ui && pip install -r requirements.txt
+    buildCommand: pip install -r requirements.txt
     startCommand: gunicorn app:app
     envVars:
       - key: GOOGLE_CREDENTIALS_JSON
