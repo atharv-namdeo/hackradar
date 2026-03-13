@@ -101,7 +101,8 @@ def get_status(tags, deadline):
 def get_emails():
     try:
         service = authenticate()
-        query = ' OR '.join([f'"{kw}"' for kw in KEYWORDS])
+        base_query = ' OR '.join([f'"{kw}"' for kw in KEYWORDS])
+        query = f'({base_query}) -to:atharv.namdeo2025@vitstudent.ac.in'
         result = service.users().messages().list(
             userId='me', q=query, maxResults=50
         ).execute()
