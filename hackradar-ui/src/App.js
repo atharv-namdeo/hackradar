@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import DOMPurify from "dompurify";
 
 const STATUS_CONFIG = {
   urgent: { label: "Urgent", color: "#ff4757", bg: "#ff475718" },
@@ -349,6 +350,13 @@ export default function HackRadar() {
             z-index: 40;
           }
         }
+        
+        .email-html-content a { color: #60a5fa; text-decoration: none; }
+        .email-html-content a:hover { text-decoration: underline; }
+        .email-html-content img { max-width: 100%; height: auto; border-radius: 8px; margin: 12px 0; }
+        .email-html-content blockquote { border-left: 3px solid #334155; padding-left: 12px; margin: 12px 0; color: #94a3b8; }
+        .email-html-content ul, .email-html-content ol { padding-left: 20px; margin: 12px 0; }
+        .email-html-content p { margin-bottom: 12px; }
       `}</style>
     </div>
   );
@@ -423,7 +431,15 @@ function DetailPanel({ email, onClose }) {
       <div style={s.detailDivider} />
 
       <div style={s.detailBodyLabel}>Message Content</div>
-      <div style={s.detailBody}>{email.body_full || email.body_preview || email.snippet || "No content available."}</div>
+      <div 
+        style={s.detailBodyHtml} 
+        className="email-html-content"
+        dangerouslySetInnerHTML={{ 
+          __html: email.body_html 
+            ? DOMPurify.sanitize(email.body_html) 
+            : DOMPurify.sanitize(email.body_text || email.body_preview || email.snippet || "No content available.").replace(/\n/g, '<br/>')
+        }} 
+      />
 
       <div style={s.detailDivider} />
 
@@ -565,6 +581,10 @@ const s = {
   metaVal: { fontSize: 12, color: "#94a3b8", lineHeight: 1.5 },
   detailDivider: { height: 1, background: "#0f1e35", margin: "16px 0" },
   detailBodyLabel: { fontSize: 9, color: "#334155", letterSpacing: 2, textTransform: "uppercase", marginBottom: 8, fontWeight: 600 },
-  detailBody: { fontSize: 12, color: "#64748b", lineHeight: 1.8, fontFamily: "'JetBrains Mono', monospace", whiteSpace: "pre-wrap", wordBreak: "break-word" },
+  detailBodyHtml: { 
+    fontSize: 14, color: "#cbd5e1", lineHeight: 1.6, 
+    fontFamily: "system-ui, -apple-system, sans-serif", 
+    wordBreak: "break-word", overflowX: "hidden" 
+  },
   detailTags: { display: "flex", gap: 6, flexWrap: "wrap" },
 };

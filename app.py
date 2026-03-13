@@ -69,16 +69,38 @@ def decode_str(s):
     return decoded or ''
 
 def get_body(payload):
-    if 'parts' in payload:
-        for part in payload['parts']:
+    text_parts = []
+    html_parts = []
+
+    def parse_parts(parts):
+        for part in parts:
             if part['mimeType'] == 'text/plain':
                 data = part['body'].get('data', '')
                 if data:
-                    return base64.urlsafe_b64decode(data).decode('utf-8', errors='ignore')
-    data = payload.get('body', {}).get('data', '')
-    if data:
-        return base64.urlsafe_b64decode(data).decode('utf-8', errors='ignore')
-    return ''
+                    text_parts.append(base64.urlsafe_b64decode(data).decode('utf-8', errors='ignore'))
+            elif part['mimeType'] == 'text/html':
+                data = part['body'].get('data', '')
+                if data:
+                    html_parts.append(base64.urlsafe_b64decode(data).decode('utf-8', errors='ignore'))
+            elif 'parts' in part:
+                parse_parts(part['parts'])
+
+    if 'parts' in payload:
+        parse_parts(payload['parts'])
+    else:
+        # Fallback if there are no parts
+        mime_type = payload.get('mimeType', 'text/plain')
+        data = payload.get('body', {}).get('data', '')
+        if data:
+            decoded = base64.urlsafe_b64decode(data).decode('utf-8', errors='ignore')
+            if mime_type == 'text/html':
+                html_parts.append(decoded)
+            else:
+                text_parts.append(decoded)
+                
+    text_content = "\n".join(text_parts)
+    html_content = "\n".join(html_parts)
+    return text_content, html_content
 
 def extract_deadline(text):
     patterns = [
@@ -114,10 +136,10 @@ def get_emails():
                 userId='me', id=msg['id'], format='full'
             ).execute()
             headers = {h['name']: h['value'] for h in full['payload']['headers']}
-            body = get_body(full['payload'])
+            body_text, body_html = get_body(full['payload'])
             subject = decode_str(headers.get('Subject', 'No Subject'))
-            matched_tags = [kw for kw in KEYWORDS if kw.lower() in (subject + body).lower()]
-            deadline = extract_deadline(body)
+            matched_tags = [kw for kw in KEYWORDS if kw.lower() in (subject + body_text).lower()]
+            deadline = extract_deadline(body_text)
 
             emails.append({
                 'id': msg['id'],
@@ -125,8 +147,9 @@ def get_emails():
                 'from': decode_str(headers.get('From', '')),
                 'date': headers.get('Date', ''),
                 'snippet': full.get('snippet', ''),
-                'body_preview': body[:300].strip(),
-                'body_full': body.strip(),
+                'body_preview': body_text[:300].strip(),
+                'body_text': body_text.strip(),
+                'body_html': body_html.strip(),
                 'deadline': deadline,
                 'tags': matched_tags[:5],
                 'status': get_status(matched_tags, deadline),
