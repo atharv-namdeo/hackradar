@@ -42,6 +42,7 @@ export default function HackRadar() {
   const [filterTag, setFilterTag] = useState("all");
   const [refreshing, setRefreshing] = useState(false);
   const [view, setView] = useState("grid");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const API_URL = process.env.REACT_APP_API_URL || "";
 
@@ -84,14 +85,31 @@ export default function HackRadar() {
   };
 
   return (
-    <div style={s.root}>
+    <div style={s.root} className="app-root">
       <div style={s.scanline} />
       <div style={s.noise} />
 
+      {/* Mobile Header */}
+      <div className="mobile-header">
+        <div style={s.logo}>
+          <span style={s.logoMark}>⚡</span>
+          <div>
+            <div style={s.logoName}>HackRadar</div>
+            <div style={s.logoSub}>VIT Vellore</div>
+          </div>
+        </div>
+        <button 
+          className="hamburger-btn" 
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+        >
+          {mobileMenuOpen ? "✕" : "☰"}
+        </button>
+      </div>
+
       {/* Sidebar */}
-      <aside style={s.sidebar}>
+      <aside style={s.sidebar} className={`sidebar ${mobileMenuOpen ? 'open' : ''}`}>
         <div style={s.sideTop}>
-          <div style={s.logo}>
+          <div style={s.logo} className="desktop-logo">
             <span style={s.logoMark}>⚡</span>
             <div>
               <div style={s.logoName}>HackRadar</div>
@@ -105,7 +123,7 @@ export default function HackRadar() {
               <button
                 key={st}
                 style={{ ...s.sideBtn, ...(filterStatus === st ? s.sideBtnActive : {}) }}
-                onClick={() => setFilterStatus(st)}
+                onClick={() => { setFilterStatus(st); setMobileMenuOpen(false); }}
               >
                 <span style={s.sideBtnDot(st)} />
                 <span style={s.sideBtnText}>
@@ -123,21 +141,23 @@ export default function HackRadar() {
               <div style={s.sideLabel}>FILTER TAGS</div>
               <button
                 style={{ ...s.sideBtn, ...(filterTag === "all" ? s.sideBtnActive : {}) }}
-                onClick={() => setFilterTag("all")}
+                onClick={() => { setFilterTag("all"); setMobileMenuOpen(false); }}
               >
                 <span style={{ ...s.sideBtnDot("all") }} />
                 <span style={s.sideBtnText}>All Tags</span>
               </button>
-              {allTags.slice(0, 10).map(tag => (
-                <button
-                  key={tag}
-                  style={{ ...s.sideBtn, ...(filterTag === tag ? s.sideBtnActive : {}) }}
-                  onClick={() => setFilterTag(tag)}
-                >
-                  <span style={{ width: 8, height: 8, borderRadius: "50%", background: getTagColor(tag), flexShrink: 0 }} />
-                  <span style={s.sideBtnText}>{tag}</span>
-                </button>
-              ))}
+              <div className="tags-container">
+                {allTags.slice(0, 10).map(tag => (
+                  <button
+                    key={tag}
+                    style={{ ...s.sideBtn, ...(filterTag === tag ? s.sideBtnActive : {}) }}
+                    onClick={() => { setFilterTag(tag); setMobileMenuOpen(false); }}
+                  >
+                    <span style={{ width: 8, height: 8, borderRadius: "50%", background: getTagColor(tag), flexShrink: 0 }} />
+                    <span style={s.sideBtnText}>{tag}</span>
+                  </button>
+                ))}
+              </div>
             </div>
           )}
         </div>
@@ -149,10 +169,10 @@ export default function HackRadar() {
       </aside>
 
       {/* Main */}
-      <main style={s.main}>
+      <main style={s.main} className="main-content">
         {/* Topbar */}
-        <div style={s.topbar}>
-          <div style={s.searchWrap}>
+        <div style={s.topbar} className="topbar">
+          <div style={s.searchWrap} className="search-wrap">
             <span style={{ fontSize: 13, color: "#475569", marginRight: 8 }}>⌕</span>
             <input
               style={s.searchInput}
@@ -164,15 +184,17 @@ export default function HackRadar() {
               <button style={s.clearBtn} onClick={() => setSearch("")}>✕</button>
             )}
           </div>
-          <div style={s.topbarRight}>
-            <button
-              style={{ ...s.viewToggle, ...(view === "grid" ? s.viewToggleActive : {}) }}
-              onClick={() => setView("grid")} title="Grid view"
-            >⊞</button>
-            <button
-              style={{ ...s.viewToggle, ...(view === "list" ? s.viewToggleActive : {}) }}
-              onClick={() => setView("list")} title="List view"
-            >☰</button>
+          <div style={s.topbarRight} className="topbar-right">
+            <div className="view-toggles">
+              <button
+                style={{ ...s.viewToggle, ...(view === "grid" ? s.viewToggleActive : {}) }}
+                onClick={() => setView("grid")} title="Grid view"
+              >⊞</button>
+              <button
+                style={{ ...s.viewToggle, ...(view === "list" ? s.viewToggleActive : {}) }}
+                onClick={() => setView("list")} title="List view"
+              >☰</button>
+            </div>
             <button style={s.refreshBtn} onClick={fetchEmails} disabled={refreshing}>
               <span style={{ display: "inline-block", animation: refreshing ? "spin 0.8s linear infinite" : "none" }}>↻</span>
               {refreshing ? " Scanning..." : " Refresh"}
@@ -181,7 +203,7 @@ export default function HackRadar() {
         </div>
 
         {/* Stats strip */}
-        <div style={s.statsStrip}>
+        <div style={s.statsStrip} className="stats-strip">
           {[
             { icon: "📬", val: emails.length, label: "Total" },
             { icon: "🔥", val: counts.urgent, label: "Urgent" },
@@ -189,7 +211,7 @@ export default function HackRadar() {
             { icon: "🆕", val: counts.new, label: "New" },
             { icon: "🔍", val: filtered.length, label: "Showing" },
           ].map(({ icon, val, label }) => (
-            <div key={label} style={s.statPill}>
+            <div key={label} style={s.statPill} className="stat-pill">
               <span>{icon}</span>
               <span style={s.statVal}>{val}</span>
               <span style={s.statLabel}>{label}</span>
@@ -198,9 +220,9 @@ export default function HackRadar() {
         </div>
 
         {/* Body */}
-        <div style={s.body}>
+        <div style={s.body} className="body-container">
           {/* Email list */}
-          <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ flex: 1, minWidth: 0, overflowY: "auto", position: 'relative' }} className="email-list-container">
             {loading ? (
               <div style={s.center}>
                 <div style={s.spinner} />
@@ -209,12 +231,12 @@ export default function HackRadar() {
                 </div>
               </div>
             ) : error ? (
-              <div style={s.center}>
+              <div style={s.center} className="error-container">
                 <div style={{ fontSize: 40, marginBottom: 12 }}>⚠️</div>
                 <div style={{ color: "#f87171", fontSize: 14, marginBottom: 8 }}>Backend Error</div>
                 <div style={{ color: "#475569", fontSize: 12, maxWidth: 300, textAlign: "center", marginBottom: 16 }}>{error}</div>
                 <div style={{ color: "#334155", fontSize: 12, background: "#0f172a", borderRadius: 8, padding: "8px 16px" }}>
-                  Make sure <code style={{ color: "#a78bfa" }}>python app.py</code> is running on port 5000
+                  Make sure <code style={{ color: "#a78bfa" }}>backend</code> is accessible.
                 </div>
               </div>
             ) : filtered.length === 0 ? (
@@ -223,7 +245,7 @@ export default function HackRadar() {
                 <div style={{ color: "#475569", fontSize: 14 }}>No emails match your filters</div>
               </div>
             ) : (
-              <div style={view === "grid" ? s.grid : s.list}>
+              <div style={view === "grid" ? s.grid : s.list} className={view === "grid" ? "grid-view" : "list-view"}>
                 {filtered.map((email, i) => (
                   <EmailCard
                     key={email.id}
@@ -240,7 +262,10 @@ export default function HackRadar() {
 
           {/* Detail panel */}
           {selected && (
-            <DetailPanel email={selected} onClose={() => setSelected(null)} />
+            <>
+              <div className="mobile-overlay" onClick={() => setSelected(null)}></div>
+              <DetailPanel email={selected} onClose={() => setSelected(null)} />
+            </>
           )}
         </div>
       </main>
@@ -248,12 +273,82 @@ export default function HackRadar() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
         @keyframes spin { to { transform: rotate(360deg); } }
         @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+        .mobile-header { display: none; }
+        .hamburger-btn { background: none; border: none; color: #f1f5f9; font-size: 24px; cursor: pointer; padding: 4px; }
+        .mobile-overlay { display: none; }
+
+        .tags-container {
+          max-height: 300px;
+          overflow-y: auto;
+          overflow-x: hidden;
+        }
+
+        /* Responsive Styles */
+        @media (max-width: 768px) {
+          .app-root { flex-direction: column !important; }
+          .mobile-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            background: #080d17;
+            border-bottom: 1px solid #0f1e35;
+            z-index: 40;
+          }
+          .desktop-logo { display: none !important; }
+          .sidebar {
+            position: absolute;
+            top: 65px;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            width: 100% !important;
+            border-right: none !important;
+            z-index: 30;
+            display: none !important;
+            background: #080d17 !important;
+          }
+          .sidebar.open { display: flex !important; }
+          .topbar {
+            flex-direction: column !important;
+            align-items: stretch !important;
+            padding: 12px 16px !important;
+            gap: 12px !important;
+          }
+          .search-wrap { max-width: none !important; }
+          .topbar-right { justify-content: space-between !important; width: 100%; }
+          .stats-strip {
+            overflow-x: auto !important;
+            flex-wrap: nowrap !important;
+            padding: 12px 16px !important;
+            -webkit-overflow-scrolling: touch;
+          }
+          .stat-pill { flex-shrink: 0; }
+          .grid-view { grid-template-columns: 1fr !important; padding: 16px !important; }
+          .list-view { padding: 12px 16px !important; }
+          
+          .detail-panel {
+            position: absolute !important;
+            top: 0; left: 0; right: 0; bottom: 0;
+            width: 100% !important;
+            z-index: 50;
+            border-left: none !important;
+          }
+          .mobile-overlay {
+            display: block;
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 40;
+          }
+        }
       `}</style>
     </div>
   );
@@ -304,7 +399,7 @@ function EmailCard({ email, view, selected, onClick, index }) {
 function DetailPanel({ email, onClose }) {
   const st = STATUS_CONFIG[email.status] || STATUS_CONFIG.new;
   return (
-    <div style={s.detail}>
+    <div style={s.detail} className="detail-panel">
       <div style={s.detailTopbar}>
         <span style={{ ...s.statusBadge, color: st.color, background: st.bg }}>
           {st.label}
@@ -424,7 +519,7 @@ const s = {
   },
   statVal: { fontFamily: "'JetBrains Mono', monospace", fontSize: 13, color: "#e2e8f0", fontWeight: 500 },
   statLabel: { color: "#475569", fontSize: 11 },
-  body: { flex: 1, display: "flex", overflow: "hidden" },
+  body: { flex: 1, display: "flex", overflow: "hidden", position: "relative" },
   grid: {
     padding: 24, display: "grid",
     gridTemplateColumns: "repeat(auto-fill, minmax(270px, 1fr))",
