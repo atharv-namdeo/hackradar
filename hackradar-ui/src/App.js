@@ -519,7 +519,7 @@ const s = {
   },
   statVal: { fontFamily: "'JetBrains Mono', monospace", fontSize: 13, color: "#e2e8f0", fontWeight: 500 },
   statLabel: { color: "#475569", fontSize: 11 },
-  body: { flex: 1, display: "flex", overflow: "hidden", position: "relative" },
+  body: { flex: 1, display: "flex", overflow: "hidden", position: "relative", width: "100%" },
   grid: {
     padding: 24, display: "grid",
     gridTemplateColumns: "repeat(auto-fill, minmax(270px, 1fr))",
@@ -538,7 +538,7 @@ const s = {
   statusBadge: { fontSize: 10, fontWeight: 600, padding: "2px 9px", borderRadius: 20, letterSpacing: 0.4 },
   deadlineBadge: { fontSize: 10, color: "#f87171", background: "#f8717118", padding: "2px 8px", borderRadius: 20 },
   timeAgo: { fontSize: 10, color: "#334155", fontFamily: "'JetBrains Mono', monospace" },
-  cardSubject: { fontSize: 13, fontWeight: 600, color: "#e2e8f0", lineHeight: 1.4, marginBottom: 4 },
+  cardSubject: { fontSize: 13, fontWeight: 600, color: "#e2e8f0", lineHeight: 1.4, marginBottom: 4, wordBreak: "break-word" },
   cardFrom: { fontSize: 11, color: "#334155", marginBottom: 8, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
   cardSnippet: { fontSize: 12, color: "#475569", lineHeight: 1.6, marginBottom: 10 },
   cardTags: { display: "flex", gap: 5, flexWrap: "wrap" },
