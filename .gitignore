@@ -4,3 +4,6 @@
 *.pem
 *.pfx
 *.crt
+credentials.json
+token.pickle
+app_original.py

@@ -1,15 +1,146 @@
-import os
+import os, re, base64, pickle, json
+from flask import Flask, jsonify
+from flask_cors import CORS
+from googleapiclient.discovery import build
+from google_auth_oauthlib.flow import InstalledAppFlow
+from google.auth.transport.requests import Request
+from email.header import decode_header as dh
+import dateparser
+from datetime import datetime
 
-# Load Google credentials from environment variables
-GOOGLE_CLIENT_EMAIL = os.getenv('GOOGLE_CLIENT_EMAIL')
-GOOGLE_PRIVATE_KEY = os.getenv('GOOGLE_PRIVATE_KEY')
+app = Flask(__name__)
+CORS(app)
 
-# Use the credentials as needed
-# For example, initializing a client can be done with:
-# from google.oauth2 import service_account
-# credentials = service_account.Credentials.from_service_account_info({
-#     'client_email': GOOGLE_CLIENT_EMAIL,
-#     'private_key': GOOGLE_PRIVATE_KEY,
-# })
+SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
 
-# Rest of your code...
+KEYWORDS = [
+    'hackathon', 'hack', 'devpost', 'competition', 'contest',
+    'challenge', 'ideathon', 'datathon', 'buildathon',
+    'smart india', 'SIH', 'MLH', 'IEEE', 'ACM',
+    'register now', 'deadline', 'submit project'
+]
+
+def authenticate():
+    creds = None
+    
+    # Check for GOOGLE_TOKEN_PICKLE in environment variables (Base64 encoded)
+    env_token = os.getenv('GOOGLE_TOKEN_PICKLE')
+    if env_token:
+        try:
+            creds = pickle.loads(base64.b64decode(env_token))
+        except Exception as e:
+            print(f"Error loading GOOGLE_TOKEN_PICKLE: {e}")
+
+    # Fallback to token.pickle file
+    if not creds and os.path.exists('token.pickle'):
+        with open('token.pickle', 'rb') as f:
+            creds = pickle.load(f)
+
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            # Load credentials from environment variable if available
+            env_creds = os.getenv('GOOGLE_CREDENTIALS_JSON')
+            cred_file = 'credentials.json'
+            
+            if env_creds:
+                with open(cred_file, 'w') as f:
+                    f.write(env_creds)
+            
+            if not os.path.exists(cred_file):
+                raise Exception("Missing credentials.json and GOOGLE_CREDENTIALS_JSON env var")
+
+            flow = InstalledAppFlow.from_client_secrets_file(cred_file, SCOPES)
+            creds = flow.run_local_server(port=0)
+
+        # Save the credentials for the next run (locally)
+        with open('token.pickle', 'wb') as f:
+            pickle.dump(creds, f)
+            
+    return build('gmail', 'v1', credentials=creds)
+
+def decode_str(s):
+    if not s: return ''
+    decoded, enc = dh(s)[0]
+    if isinstance(decoded, bytes):
+        return decoded.decode(enc or 'utf-8', errors='ignore')
+    return decoded or ''
+
+def get_body(payload):
+    if 'parts' in payload:
+        for part in payload['parts']:
+            if part['mimeType'] == 'text/plain':
+                data = part['body'].get('data', '')
+                if data:
+                    return base64.urlsafe_b64decode(data).decode('utf-8', errors='ignore')
+    data = payload.get('body', {}).get('data', '')
+    if data:
+        return base64.urlsafe_b64decode(data).decode('utf-8', errors='ignore')
+    return ''
+
+def extract_deadline(text):
+    patterns = [
+        r'(?:deadline|last date|due|closes?|ends?|submit by)[:\s]+([A-Z][a-z]+ \d{1,2}(?:,?\s*\d{4})?)',
+        r'(?:deadline|last date|due)[:\s]+(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})',
+        r'(?:before|by)\s+([A-Z][a-z]+ \d{1,2}(?:,?\s*\d{4})?)',
+    ]
+    for p in patterns:
+        m = re.search(p, text, re.IGNORECASE)
+        if m: return m.group(1)
+    return None
+
+def get_status(tags, deadline):
+    if any(t in tags for t in ['deadline', 'submit project']):
+        return 'urgent'
+    if deadline: return 'upcoming'
+    return 'new'
+
+@app.route('/api/emails')
+def get_emails():
+    try:
+        service = authenticate()
+        query = ' OR '.join([f'"{kw}"' for kw in KEYWORDS])
+        result = service.users().messages().list(
+            userId='me', q=query, maxResults=50
+        ).execute()
+        messages = result.get('messages', [])
+
+        emails = []
+        for msg in messages:
+            full = service.users().messages().get(
+                userId='me', id=msg['id'], format='full'
+            ).execute()
+            headers = {h['name']: h['value'] for h in full['payload']['headers']}
+            body = get_body(full['payload'])
+            subject = decode_str(headers.get('Subject', 'No Subject'))
+            matched_tags = [kw for kw in KEYWORDS if kw.lower() in (subject + body).lower()]
+            deadline = extract_deadline(body)
+
+            emails.append({
+                'id': msg['id'],
+                'subject': subject,
+                'from': decode_str(headers.get('From', '')),
+                'date': headers.get('Date', ''),
+                'snippet': full.get('snippet', ''),
+                'body_preview': body[:300].strip(),
+                'body_full': body.strip(),
+                'deadline': deadline,
+                'tags': matched_tags[:5],
+                'status': get_status(matched_tags, deadline),
+            })
+
+        emails.sort(key=lambda x: x['status'] != 'urgent')
+        return jsonify(emails)
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/')
+def home():
+    return "HackRadar Backend is running!"
+
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 5000))
+    print(f"🚀 HackRadar backend starting on port {port}...")
+    app.run(host='0.0.0.0', port=port, debug=False)
