@@ -43,11 +43,13 @@ export default function HackRadar() {
   const [refreshing, setRefreshing] = useState(false);
   const [view, setView] = useState("grid");
 
+  const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
   const fetchEmails = async () => {
     try {
       setRefreshing(true);
       setError(null);
-      const res = await fetch("http://localhost:5000/api/emails");
+      const res = await fetch(`${API_URL}/api/emails`);
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setEmails(data);

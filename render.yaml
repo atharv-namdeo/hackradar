@@ -9,3 +9,12 @@ services:
         sync: false
       - key: GOOGLE_TOKEN_PICKLE
         sync: false
+
+  - type: static
+    name: hackradar-frontend
+    rootDir: hackradar-ui
+    buildCommand: npm install && npm run build
+    publishDir: build
+    envVars:
+      - key: REACT_APP_API_URL
+        value: https://hackradar-backend.onrender.com
