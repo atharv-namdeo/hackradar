@@ -440,7 +440,7 @@ function DetailPanel({ email, onClose }) {
 
 const s = {
   root: {
-    display: "flex", height: "100vh", overflow: "hidden",
+    display: "flex", height: "100vh", width: "100vw", overflow: "hidden",
     background: "#060a12", fontFamily: "'Outfit', sans-serif",
     color: "#cbd5e1", position: "relative",
   },
@@ -480,7 +480,7 @@ const s = {
   sideBtnCount: { fontSize: 11, color: "#334155", fontFamily: "'JetBrains Mono', monospace" },
   sideBottom: { padding: "0 20px", display: "flex", alignItems: "center", gap: 8 },
   connectedDot: { width: 6, height: 6, borderRadius: "50%", background: "#2ed573", animation: "pulse 2s ease infinite" },
-  main: { flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" },
+  main: { flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0 },
   topbar: {
     display: "flex", alignItems: "center", gap: 12, padding: "16px 24px",
     borderBottom: "1px solid #0f1e35", background: "#070b14",
