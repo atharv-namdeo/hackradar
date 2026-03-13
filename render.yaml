@@ -1,20 +1,13 @@
 services:
   - type: web
-    name: hackradar-backend
+    name: hackradar
     runtime: python
-    buildCommand: pip install -r requirements.txt
+    buildCommand: npm install --prefix hackradar-ui && npm run build --prefix hackradar-ui && pip install -r requirements.txt
     startCommand: gunicorn app:app
     envVars:
       - key: GOOGLE_CREDENTIALS_JSON
         sync: false
       - key: GOOGLE_TOKEN_PICKLE
         sync: false
-
-  - type: static
-    name: hackradar-frontend
-    rootDir: hackradar-ui
-    buildCommand: npm install && npm run build
-    publishDir: build
-    envVars:
-      - key: REACT_APP_API_URL
-        value: https://hackradar-backend.onrender.com
+      - key: PORT
+        value: 5000

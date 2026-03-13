@@ -1,5 +1,5 @@
 import os, re, base64, pickle, json
-from flask import Flask, jsonify
+from flask import Flask, jsonify, send_from_directory
 from flask_cors import CORS
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -8,7 +8,8 @@ from email.header import decode_header as dh
 import dateparser
 from datetime import datetime
 
-app = Flask(__name__)
+# Configure Flask to serve the React build
+app = Flask(__name__, static_folder='hackradar-ui/build', static_url_path='')
 CORS(app)
 
 SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
@@ -136,9 +137,14 @@ def get_emails():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/')
-def home():
-    return "HackRadar Backend is running!"
+# Serve React App
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve(path):
+    if path != "" and os.path.exists(app.static_folder + '/' + path):
+        return send_from_directory(app.static_folder, path)
+    else:
+        return send_from_directory(app.static_folder, 'index.html')
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
