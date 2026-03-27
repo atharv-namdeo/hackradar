@@ -159,7 +159,8 @@ def get_emails():
                 'status': get_status(matched_tags, deadline),
             })
 
-        emails.sort(key=lambda x: x['status'] != 'urgent')
+        order = {'urgent': 0, 'upcoming': 1, 'new': 2}
+        emails.sort(key=lambda x: order.get(x['status'], 3))
         return jsonify(emails)
 
     except Exception as e:
