@@ -58,6 +58,9 @@ def authenticate():
         # Save the credentials for the next run (locally)
         with open('token.pickle', 'wb') as f:
             pickle.dump(creds, f)
+        # Log re-encoded token so it can be updated in env vars on Render
+        print("UPDATED TOKEN (re-paste into GOOGLE_TOKEN_PICKLE env var):")
+        print(base64.b64encode(pickle.dumps(creds)).decode())
             
     return build('gmail', 'v1', credentials=creds)
 
