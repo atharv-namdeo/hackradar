@@ -47,7 +47,7 @@ def authenticate():
             
             if env_creds:
                 with open(cred_file, 'w') as f:
-                    f.write(env_creds)
+                f.write(base64.b64decode(env_creds).decode())
             
             if not os.path.exists(cred_file):
                 raise Exception("Missing credentials.json and GOOGLE_CREDENTIALS_JSON env var")
