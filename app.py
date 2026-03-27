@@ -126,7 +126,7 @@ def get_status(tags, deadline):
             d = datetime.strptime(deadline, '%d %b %Y')
             days_left = (d - datetime.now()).days
             if days_left < 0:
-                return 'new'
+                return 'urgent'
             if days_left <= 3:
                 return 'urgent'
             return 'upcoming'
