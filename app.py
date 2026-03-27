@@ -110,7 +110,11 @@ def extract_deadline(text):
     ]
     for p in patterns:
         m = re.search(p, text, re.IGNORECASE)
-        if m: return m.group(1)
+        if m:
+            parsed = dateparser.parse(m.group(1))
+            if parsed:
+                return parsed.strftime('%d %b %Y')
+            return m.group(1)
     return None
 
 def get_status(tags, deadline):
