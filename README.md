@@ -26,14 +26,32 @@ Built for VIT Vellore students (works with `@vitstudent.ac.in` Google Workspace 
 ## 🗂️ Project Structure
 
 ```
-hackradar/
-├── backend/
-│   ├── app.py              # Flask API — Gmail scraper
-│   └── requirements.txt    # Python dependencies
-├── frontend/
-│   └── HackRadar.jsx       # React dashboard
-├── .gitignore
-└── README.md
+└── hackradar/
+    ├── README.md
+    ├── app.py
+    ├── DEPLOYMENT.md
+    ├── LICENSE
+    ├── render.yaml
+    ├── requirements.txt
+    ├── .env.example
+    ├── hackradar-ui/
+    │   ├── package.json
+    │   ├── public/
+    │   │   ├── index.html
+    │   │   ├── manifest.json
+    │   │   └── robots.txt
+    │   └── src/
+    │       ├── App.css
+    │       ├── App.js
+    │       ├── App.test.js
+    │       ├── index.css
+    │       ├── index.js
+    │       ├── reportWebVitals.js
+    │       └── setupTests.js
+    └── .github/
+        └── workflows/
+            └── deploy.yml
+
 ```
 
 ---

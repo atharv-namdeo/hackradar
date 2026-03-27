@@ -47,7 +47,7 @@ def authenticate():
             
             if env_creds:
                 with open(cred_file, 'w') as f:
-                    f.write(env_creds)
+                    f.write(base64.b64decode(env_creds).decode())
             
             if not os.path.exists(cred_file):
                 raise Exception("Missing credentials.json and GOOGLE_CREDENTIALS_JSON env var")
@@ -58,6 +58,9 @@ def authenticate():
         # Save the credentials for the next run (locally)
         with open('token.pickle', 'wb') as f:
             pickle.dump(creds, f)
+        # Log re-encoded token so it can be updated in env vars on Render
+        print("UPDATED TOKEN (re-paste into GOOGLE_TOKEN_PICKLE env var):")
+        print(base64.b64encode(pickle.dumps(creds)).decode())
             
     return build('gmail', 'v1', credentials=creds)
 
@@ -110,13 +113,27 @@ def extract_deadline(text):
     ]
     for p in patterns:
         m = re.search(p, text, re.IGNORECASE)
-        if m: return m.group(1)
+        if m:
+            parsed = dateparser.parse(m.group(1))
+            if parsed:
+                return parsed.strftime('%d %b %Y')
+            return m.group(1)
     return None
 
 def get_status(tags, deadline):
+    if deadline:
+        try:
+            d = datetime.strptime(deadline, '%d %b %Y')
+            days_left = (d - datetime.now()).days
+            if days_left < 0:
+                return 'urgent'
+            if days_left <= 3:
+                return 'urgent'
+            return 'upcoming'
+        except ValueError:
+            pass
     if any(t in tags for t in ['deadline', 'submit project']):
         return 'urgent'
-    if deadline: return 'upcoming'
     return 'new'
 
 @app.route('/api/emails')
@@ -155,7 +172,8 @@ def get_emails():
                 'status': get_status(matched_tags, deadline),
             })
 
-        emails.sort(key=lambda x: x['status'] != 'urgent')
+        order = {'urgent': 0, 'upcoming': 1, 'new': 2}
+        emails.sort(key=lambda x: order.get(x['status'], 3))
         return jsonify(emails)
 
     except Exception as e:
