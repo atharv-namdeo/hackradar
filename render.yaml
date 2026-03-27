@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: hackradar
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: GOOGLE_CREDENTIALS_JSON
+        sync: false
+      - key: GOOGLE_TOKEN_PICKLE
+        sync: false
+      - key: PORT
+        value: 5000

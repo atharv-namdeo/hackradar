@@ -2,6 +2,8 @@
 
 > A personal email scraper + dashboard that automatically finds hackathon and competition emails from your Gmail and displays them in a clean, filterable GUI.
 
+🌐 **Live Demo:** [https://hackradar-xw6o.onrender.com/](https://hackradar-xw6o.onrender.com/)
+
 Built for VIT Vellore students (works with `@vitstudent.ac.in` Google Workspace accounts).
 
 ![HackRadar Dashboard](https://img.shields.io/badge/status-active-2ed573?style=flat-square) ![Python](https://img.shields.io/badge/python-3.8+-3776AB?style=flat-square&logo=python&logoColor=white) ![React](https://img.shields.io/badge/react-18+-61DAFB?style=flat-square&logo=react&logoColor=black) ![Gmail API](https://img.shields.io/badge/Gmail_API-v1-EA4335?style=flat-square&logo=gmail&logoColor=white)

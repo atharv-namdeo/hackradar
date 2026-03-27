@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import DOMPurify from "dompurify";
 
 const STATUS_CONFIG = {
   urgent: { label: "Urgent", color: "#ff4757", bg: "#ff475718" },
@@ -42,12 +43,15 @@ export default function HackRadar() {
   const [filterTag, setFilterTag] = useState("all");
   const [refreshing, setRefreshing] = useState(false);
   const [view, setView] = useState("grid");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const API_URL = process.env.REACT_APP_API_URL || "";
 
   const fetchEmails = async () => {
     try {
       setRefreshing(true);
       setError(null);
-      const res = await fetch("http://localhost:5000/api/emails");
+      const res = await fetch(`${API_URL}/api/emails`);
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setEmails(data);
@@ -82,14 +86,31 @@ export default function HackRadar() {
   };
 
   return (
-    <div style={s.root}>
+    <div style={s.root} className="app-root">
       <div style={s.scanline} />
       <div style={s.noise} />
 
+      {/* Mobile Header */}
+      <div className="mobile-header">
+        <div style={s.logo}>
+          <span style={s.logoMark}>⚡</span>
+          <div>
+            <div style={s.logoName}>HackRadar</div>
+            <div style={s.logoSub}>VIT Vellore</div>
+          </div>
+        </div>
+        <button 
+          className="hamburger-btn" 
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+        >
+          {mobileMenuOpen ? "✕" : "☰"}
+        </button>
+      </div>
+
       {/* Sidebar */}
-      <aside style={s.sidebar}>
+      <aside style={s.sidebar} className={`sidebar ${mobileMenuOpen ? 'open' : ''}`}>
         <div style={s.sideTop}>
-          <div style={s.logo}>
+          <div style={s.logo} className="desktop-logo">
             <span style={s.logoMark}>⚡</span>
             <div>
               <div style={s.logoName}>HackRadar</div>
@@ -103,7 +124,7 @@ export default function HackRadar() {
               <button
                 key={st}
                 style={{ ...s.sideBtn, ...(filterStatus === st ? s.sideBtnActive : {}) }}
-                onClick={() => setFilterStatus(st)}
+                onClick={() => { setFilterStatus(st); setMobileMenuOpen(false); }}
               >
                 <span style={s.sideBtnDot(st)} />
                 <span style={s.sideBtnText}>
@@ -121,21 +142,23 @@ export default function HackRadar() {
               <div style={s.sideLabel}>FILTER TAGS</div>
               <button
                 style={{ ...s.sideBtn, ...(filterTag === "all" ? s.sideBtnActive : {}) }}
-                onClick={() => setFilterTag("all")}
+                onClick={() => { setFilterTag("all"); setMobileMenuOpen(false); }}
               >
                 <span style={{ ...s.sideBtnDot("all") }} />
                 <span style={s.sideBtnText}>All Tags</span>
               </button>
-              {allTags.slice(0, 10).map(tag => (
-                <button
-                  key={tag}
-                  style={{ ...s.sideBtn, ...(filterTag === tag ? s.sideBtnActive : {}) }}
-                  onClick={() => setFilterTag(tag)}
-                >
-                  <span style={{ width: 8, height: 8, borderRadius: "50%", background: getTagColor(tag), flexShrink: 0 }} />
-                  <span style={s.sideBtnText}>{tag}</span>
-                </button>
-              ))}
+              <div className="tags-container">
+                {allTags.slice(0, 10).map(tag => (
+                  <button
+                    key={tag}
+                    style={{ ...s.sideBtn, ...(filterTag === tag ? s.sideBtnActive : {}) }}
+                    onClick={() => { setFilterTag(tag); setMobileMenuOpen(false); }}
+                  >
+                    <span style={{ width: 8, height: 8, borderRadius: "50%", background: getTagColor(tag), flexShrink: 0 }} />
+                    <span style={s.sideBtnText}>{tag}</span>
+                  </button>
+                ))}
+              </div>
             </div>
           )}
         </div>
@@ -147,10 +170,10 @@ export default function HackRadar() {
       </aside>
 
       {/* Main */}
-      <main style={s.main}>
+      <main style={s.main} className="main-content">
         {/* Topbar */}
-        <div style={s.topbar}>
-          <div style={s.searchWrap}>
+        <div style={s.topbar} className="topbar">
+          <div style={s.searchWrap} className="search-wrap">
             <span style={{ fontSize: 13, color: "#475569", marginRight: 8 }}>⌕</span>
             <input
               style={s.searchInput}
@@ -162,15 +185,17 @@ export default function HackRadar() {
               <button style={s.clearBtn} onClick={() => setSearch("")}>✕</button>
             )}
           </div>
-          <div style={s.topbarRight}>
-            <button
-              style={{ ...s.viewToggle, ...(view === "grid" ? s.viewToggleActive : {}) }}
-              onClick={() => setView("grid")} title="Grid view"
-            >⊞</button>
-            <button
-              style={{ ...s.viewToggle, ...(view === "list" ? s.viewToggleActive : {}) }}
-              onClick={() => setView("list")} title="List view"
-            >☰</button>
+          <div style={s.topbarRight} className="topbar-right">
+            <div className="view-toggles">
+              <button
+                style={{ ...s.viewToggle, ...(view === "grid" ? s.viewToggleActive : {}) }}
+                onClick={() => setView("grid")} title="Grid view"
+              >⊞</button>
+              <button
+                style={{ ...s.viewToggle, ...(view === "list" ? s.viewToggleActive : {}) }}
+                onClick={() => setView("list")} title="List view"
+              >☰</button>
+            </div>
             <button style={s.refreshBtn} onClick={fetchEmails} disabled={refreshing}>
               <span style={{ display: "inline-block", animation: refreshing ? "spin 0.8s linear infinite" : "none" }}>↻</span>
               {refreshing ? " Scanning..." : " Refresh"}
@@ -179,7 +204,7 @@ export default function HackRadar() {
         </div>
 
         {/* Stats strip */}
-        <div style={s.statsStrip}>
+        <div style={s.statsStrip} className="stats-strip">
           {[
             { icon: "📬", val: emails.length, label: "Total" },
             { icon: "🔥", val: counts.urgent, label: "Urgent" },
@@ -187,7 +212,7 @@ export default function HackRadar() {
             { icon: "🆕", val: counts.new, label: "New" },
             { icon: "🔍", val: filtered.length, label: "Showing" },
           ].map(({ icon, val, label }) => (
-            <div key={label} style={s.statPill}>
+            <div key={label} style={s.statPill} className="stat-pill">
               <span>{icon}</span>
               <span style={s.statVal}>{val}</span>
               <span style={s.statLabel}>{label}</span>
@@ -196,9 +221,9 @@ export default function HackRadar() {
         </div>
 
         {/* Body */}
-        <div style={s.body}>
+        <div style={s.body} className="body-container">
           {/* Email list */}
-          <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ flex: 1, minWidth: 0, overflowY: "auto", position: 'relative' }} className="email-list-container">
             {loading ? (
               <div style={s.center}>
                 <div style={s.spinner} />
@@ -207,12 +232,12 @@ export default function HackRadar() {
                 </div>
               </div>
             ) : error ? (
-              <div style={s.center}>
+              <div style={s.center} className="error-container">
                 <div style={{ fontSize: 40, marginBottom: 12 }}>⚠️</div>
                 <div style={{ color: "#f87171", fontSize: 14, marginBottom: 8 }}>Backend Error</div>
                 <div style={{ color: "#475569", fontSize: 12, maxWidth: 300, textAlign: "center", marginBottom: 16 }}>{error}</div>
                 <div style={{ color: "#334155", fontSize: 12, background: "#0f172a", borderRadius: 8, padding: "8px 16px" }}>
-                  Make sure <code style={{ color: "#a78bfa" }}>python app.py</code> is running on port 5000
+                  Make sure <code style={{ color: "#a78bfa" }}>backend</code> is accessible.
                 </div>
               </div>
             ) : filtered.length === 0 ? (
@@ -221,7 +246,7 @@ export default function HackRadar() {
                 <div style={{ color: "#475569", fontSize: 14 }}>No emails match your filters</div>
               </div>
             ) : (
-              <div style={view === "grid" ? s.grid : s.list}>
+              <div style={view === "grid" ? s.grid : s.list} className={view === "grid" ? "grid-view" : "list-view"}>
                 {filtered.map((email, i) => (
                   <EmailCard
                     key={email.id}
@@ -238,7 +263,10 @@ export default function HackRadar() {
 
           {/* Detail panel */}
           {selected && (
-            <DetailPanel email={selected} onClose={() => setSelected(null)} />
+            <>
+              <div className="mobile-overlay" onClick={() => setSelected(null)}></div>
+              <DetailPanel email={selected} onClose={() => setSelected(null)} />
+            </>
           )}
         </div>
       </main>
@@ -246,12 +274,89 @@ export default function HackRadar() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
         @keyframes spin { to { transform: rotate(360deg); } }
         @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+        .mobile-header { display: none; }
+        .hamburger-btn { background: none; border: none; color: #f1f5f9; font-size: 24px; cursor: pointer; padding: 4px; }
+        .mobile-overlay { display: none; }
+
+        .tags-container {
+          max-height: 300px;
+          overflow-y: auto;
+          overflow-x: hidden;
+        }
+
+        /* Responsive Styles */
+        @media (max-width: 768px) {
+          .app-root { flex-direction: column !important; }
+          .mobile-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            background: #080d17;
+            border-bottom: 1px solid #0f1e35;
+            z-index: 40;
+          }
+          .desktop-logo { display: none !important; }
+          .sidebar {
+            position: absolute;
+            top: 65px;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            width: 100% !important;
+            border-right: none !important;
+            z-index: 30;
+            display: none !important;
+            background: #080d17 !important;
+          }
+          .sidebar.open { display: flex !important; }
+          .topbar {
+            flex-direction: column !important;
+            align-items: stretch !important;
+            padding: 12px 16px !important;
+            gap: 12px !important;
+          }
+          .search-wrap { max-width: none !important; }
+          .topbar-right { justify-content: space-between !important; width: 100%; }
+          .stats-strip {
+            overflow-x: auto !important;
+            flex-wrap: nowrap !important;
+            padding: 12px 16px !important;
+            -webkit-overflow-scrolling: touch;
+          }
+          .stat-pill { flex-shrink: 0; }
+          .grid-view { grid-template-columns: minmax(0, 1fr) !important; padding: 16px !important; }
+          .list-view { padding: 12px 16px !important; }
+          
+          .detail-panel {
+            position: absolute !important;
+            top: 0; left: 0; right: 0; bottom: 0;
+            width: 100% !important;
+            z-index: 50;
+            border-left: none !important;
+          }
+          .mobile-overlay {
+            display: block;
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 40;
+          }
+        }
+        
+        .email-html-content a { color: #60a5fa; text-decoration: none; }
+        .email-html-content a:hover { text-decoration: underline; }
+        .email-html-content img { max-width: 100%; height: auto; border-radius: 8px; margin: 12px 0; }
+        .email-html-content blockquote { border-left: 3px solid #334155; padding-left: 12px; margin: 12px 0; color: #94a3b8; }
+        .email-html-content ul, .email-html-content ol { padding-left: 20px; margin: 12px 0; }
+        .email-html-content p { margin-bottom: 12px; }
       `}</style>
     </div>
   );
@@ -302,7 +407,7 @@ function EmailCard({ email, view, selected, onClick, index }) {
 function DetailPanel({ email, onClose }) {
   const st = STATUS_CONFIG[email.status] || STATUS_CONFIG.new;
   return (
-    <div style={s.detail}>
+    <div style={s.detail} className="detail-panel">
       <div style={s.detailTopbar}>
         <span style={{ ...s.statusBadge, color: st.color, background: st.bg }}>
           {st.label}
@@ -326,7 +431,15 @@ function DetailPanel({ email, onClose }) {
       <div style={s.detailDivider} />
 
       <div style={s.detailBodyLabel}>Message Content</div>
-      <div style={s.detailBody}>{email.body_full || email.body_preview || email.snippet || "No content available."}</div>
+      <div 
+        style={s.detailBodyHtml} 
+        className="email-html-content"
+        dangerouslySetInnerHTML={{ 
+          __html: email.body_html 
+            ? DOMPurify.sanitize(email.body_html) 
+            : DOMPurify.sanitize(email.body_text || email.body_preview || email.snippet || "No content available.").replace(/\n/g, '<br/>')
+        }} 
+      />
 
       <div style={s.detailDivider} />
 
@@ -343,7 +456,7 @@ function DetailPanel({ email, onClose }) {
 
 const s = {
   root: {
-    display: "flex", height: "100vh", overflow: "hidden",
+    display: "flex", height: "100vh", width: "100%", overflow: "hidden", overflowX: "hidden",
     background: "#060a12", fontFamily: "'Outfit', sans-serif",
     color: "#cbd5e1", position: "relative",
   },
@@ -383,7 +496,7 @@ const s = {
   sideBtnCount: { fontSize: 11, color: "#334155", fontFamily: "'JetBrains Mono', monospace" },
   sideBottom: { padding: "0 20px", display: "flex", alignItems: "center", gap: 8 },
   connectedDot: { width: 6, height: 6, borderRadius: "50%", background: "#2ed573", animation: "pulse 2s ease infinite" },
-  main: { flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" },
+  main: { flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0 },
   topbar: {
     display: "flex", alignItems: "center", gap: 12, padding: "16px 24px",
     borderBottom: "1px solid #0f1e35", background: "#070b14",
@@ -422,7 +535,7 @@ const s = {
   },
   statVal: { fontFamily: "'JetBrains Mono', monospace", fontSize: 13, color: "#e2e8f0", fontWeight: 500 },
   statLabel: { color: "#475569", fontSize: 11 },
-  body: { flex: 1, display: "flex", overflow: "hidden" },
+  body: { flex: 1, display: "flex", overflow: "hidden", position: "relative", width: "100%" },
   grid: {
     padding: 24, display: "grid",
     gridTemplateColumns: "repeat(auto-fill, minmax(270px, 1fr))",
@@ -434,6 +547,8 @@ const s = {
     padding: "16px 18px", cursor: "pointer",
     transition: "border-color 0.15s, background 0.15s",
     animation: "fadeUp 0.3s ease both",
+    minWidth: 0,
+    width: "100%",
   },
   cardList: { display: "flex", flexDirection: "column" },
   cardSelected: { borderColor: "#4f46e5", background: "#1e1b4b20" },
@@ -441,8 +556,8 @@ const s = {
   statusBadge: { fontSize: 10, fontWeight: 600, padding: "2px 9px", borderRadius: 20, letterSpacing: 0.4 },
   deadlineBadge: { fontSize: 10, color: "#f87171", background: "#f8717118", padding: "2px 8px", borderRadius: 20 },
   timeAgo: { fontSize: 10, color: "#334155", fontFamily: "'JetBrains Mono', monospace" },
-  cardSubject: { fontSize: 13, fontWeight: 600, color: "#e2e8f0", lineHeight: 1.4, marginBottom: 4 },
-  cardFrom: { fontSize: 11, color: "#334155", marginBottom: 8, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
+  cardSubject: { fontSize: 13, fontWeight: 600, color: "#e2e8f0", lineHeight: 1.4, marginBottom: 4, wordBreak: "break-word" },
+  cardFrom: { fontSize: 11, color: "#334155", marginBottom: 8, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", display: "block", width: "100%" },
   cardSnippet: { fontSize: 12, color: "#475569", lineHeight: 1.6, marginBottom: 10 },
   cardTags: { display: "flex", gap: 5, flexWrap: "wrap" },
   tag: { fontSize: 10, padding: "2px 9px", borderRadius: 20, fontWeight: 500 },
@@ -466,6 +581,10 @@ const s = {
   metaVal: { fontSize: 12, color: "#94a3b8", lineHeight: 1.5 },
   detailDivider: { height: 1, background: "#0f1e35", margin: "16px 0" },
   detailBodyLabel: { fontSize: 9, color: "#334155", letterSpacing: 2, textTransform: "uppercase", marginBottom: 8, fontWeight: 600 },
-  detailBody: { fontSize: 12, color: "#64748b", lineHeight: 1.8, fontFamily: "'JetBrains Mono', monospace", whiteSpace: "pre-wrap", wordBreak: "break-word" },
+  detailBodyHtml: { 
+    fontSize: 14, color: "#cbd5e1", lineHeight: 1.6, 
+    fontFamily: "system-ui, -apple-system, sans-serif", 
+    wordBreak: "break-word", overflowX: "hidden" 
+  },
   detailTags: { display: "flex", gap: 6, flexWrap: "wrap" },
 };
