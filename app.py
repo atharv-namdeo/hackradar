@@ -118,9 +118,19 @@ def extract_deadline(text):
     return None
 
 def get_status(tags, deadline):
+    if deadline:
+        try:
+            d = datetime.strptime(deadline, '%d %b %Y')
+            days_left = (d - datetime.now()).days
+            if days_left < 0:
+                return 'new'
+            if days_left <= 3:
+                return 'urgent'
+            return 'upcoming'
+        except ValueError:
+            pass
     if any(t in tags for t in ['deadline', 'submit project']):
         return 'urgent'
-    if deadline: return 'upcoming'
     return 'new'
 
 @app.route('/api/emails')
